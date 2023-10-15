@@ -1,75 +1,260 @@
-from typing import Final
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import CallbackContext, MessageHandler, ConversationHandler, CommandHandler, Updater, Filters
+from telegram.ext import CallbackQueryHandler
 
-TOKEN: Final = "6315814690:AAHxZe71KXEbRfFjYJAW2r0UCGjrKNb9kuM"
-BOT_USERNAME: Final = "@max_beetroot_tg_bot"
+from database import Session, engine
+from model import User, Base
+
+BOT_TOKEN = "6315814690:AAHxZe71KXEbRfFjYJAW2r0UCGjrKNb9kuM"
+BOT_USERNAME = "@max_beetroot_tg_bot"
+
+# states for conversation handler (see below)
+NAME, SURNAME, TEAM = range(3)
+
+
+def start(update: Update, context: CallbackContext):
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=f"Hi, {update.effective_user.first_name}.\n"
+                                  f"This is your news nba bot.\n"
+                                  f"I'll notify you about the hottest news from nba!\n"
+                                  f"Press /help for more info.")
+    sticker = open('static/' + 'sticker.webp', 'rb')
+    context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
+    return ConversationHandler.END
+
+
+def help_(update: Update, context: CallbackContext):
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text="\n📝 Things you can manage 📝\n"
+                                  "- /add_or_update_info: to add/update personal info to the database.\n"
+                                  "- /show_info: to show info about yourself.")
+
+    return ConversationHandler.END
+
+
+# def show_info(update: Update, context: CallbackContext):
+#     user = update.message.from_user.id
+#
+#     session = Session()
+#
+#     database_user = session.query(User).filter(User.telegram_id == user).first()
+#
+#     if user in database_user:
+#         context.bot.send_message(chat_id=update.effective_chat.id,
+#                                  text=f"Information about yourself: {database_user.username}; {database_user.surname}; "
+#                                       f"{database_user.team}.")
+#     else:
+#         context.bot.send_message(chat_id=update.effective_chat.id,
+#                                  text="You aren't exist in the database")
+#     session.close()
 
 
 # Commands
-async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Hello! Thanks for chatting with me!")
+# entry point for starting the conversation for personal info
+def add_info(update: Update, context: CallbackContext):
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text='1️⃣ Enter your name, please (ex. Maxim):')
+    return NAME
 
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Please type something so I can respond!")
+def name_handler(update: Update, context: CallbackContext):
+    print('Entering into name handler...')
+    # receiving the name from user from the last input
+    username = update.effective_message.text
+    # validating username
+    if not username.isalpha():
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text='⚠ Please enter correct username (ex. Maxim):')
+        return NAME
+
+    if len(username) > 15:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text='⚠ Your name is too long. Please enter correct username (ex. Maxim):')
+        return NAME
+
+    # temporary saving of data in telegram session
+    context.user_data['username'] = username.capitalize()
+
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text='✔ Info accepted.',
+                             reply_markup=button_back_menu())
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text='2️⃣ Please, enter your surname (ex. Kostenko):')
+    print('Leaving from name_handler...')
+    return SURNAME
 
 
-async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("This is a custom command!")
+def surname_handler(update: Update, context: CallbackContext):
+    print("Entering into surname handler...")
+    # receiving the surname from user from the last input
+    surname = update.effective_message.text
+    # validating surname
+    if not surname.isalpha():
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="⚠ Please enter correct surname (ex. Kostenko):")
+        return SURNAME
+
+    if len(surname) > 15:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text='⚠ Your surname is too long. Please enter correct surname (ex. Maxim):')
+        return SURNAME
+
+    # temporary saving of data in telegram session
+    context.user_data["surname"] = surname.capitalize()
+
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text="✔ Info accepted.",
+                             reply_markup=button_back_menu())
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text="3️⃣ Please enter your favourite nba team (ex. Miami Heat):")
+
+    print("Leaving from surname_handler...")
+    return TEAM
 
 
-# Responses
-def handle_response(text: str) -> str:
-    processed: str = text.lower()
+# final handler for saving/updating data to db
+def finish_handler(update: Update, context: CallbackContext):
+    print('entering finish handler ...')
 
-    if "hello" in processed:
-        return "I am good!"
+    # saving team from last user's input
+    team = update.effective_message.text
 
-    if "max" in processed:
-        return "Yeah, that's his project!"
+    # validating
+    list_of_teams = ['atlanta hawks', 'boston celtics', 'brooklyn nets', 'charlotte hornets', 'chicago bulls',
+                     'cleveland cavaliers', 'dallas mavericks', 'denver nuggets', 'detroit pistons', 'la clippers',
+                     'golden state warriors', 'houston rockets', 'indiana pacers', 'lakers', 'miami heat',
+                     'memphis grizzlies', 'milwaukee bucks', 'orlando magic', 'new orleans pelicans', 'new york knicks',
+                     'oklahoma city thunder', 'minnesota timberwolves', 'philadelphia 76ers', 'washington wizards',
+                     'portland trail blazers', 'sacramento kings', 'utah jazz', 'san antonio spurs', 'toronto raptors',
+                     'phoenix suns']
 
-    return "I don't understand what you wrote..."
+    if team.lower() not in list_of_teams:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text='⚠ Please enter an existing and correct basketball team(ex. Boston Celtics):')
+        return TEAM
 
+    # temporary saving the team into telegram session
+    context.user_data['team'] = team.title()
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text='✔ Info accepted.')
+    # sticker = open('static/' + 'sticker_2.webp', 'rb')
+    # context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message_type: str = update.message.chat.type
-    text: str = update.message.text
+    # saving unique user from telegram context
+    user = update.message.from_user.id
 
-    print(f"User ({update.message.chat.id}) in {message_type}: '{text}'")
+    # temporary saving data into telegram session
+    context.user_data['telegram_user_id'] = user
 
-    if message_type == "group":
-        if BOT_USERNAME in text:
-            new_text: str = text.replace(BOT_USERNAME, "").strip()
-            response: str = handle_response(new_text)
-        else:
-            return
+    # starting database session
+    session = Session()
+
+    # checking if user exist in database
+    database_user = session.query(User).filter(User.telegram_id == user).first()
+    # send sticker
+    sticker = open('static/' + 'sticker_2.webp', 'rb')
+
+    if not database_user:
+        # if user doesn't exist - add him
+        database_user = User(telegram_id=user,
+                             username=context.user_data['username'],
+                             surname=context.user_data['surname'],
+                             team=context.user_data['team'])
+        # adding user into session
+        session.add(database_user)
+        # saving user in db
+        session.commit()
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text='✔ Collecting the info has been completed.\n'
+                                      '✔ You can return to /help info.')
+        context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
+
     else:
-        response: str = handle_response(text)
+        # if exist - updating info
+        database_user.username = context.user_data['username']
+        database_user.surname = context.user_data['surname']
+        database_user.team = context.user_data['team']
+        session.add(database_user)
+        session.commit()
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text='✔ Updating the info has been completed.\n'
+                                      '✔ You can return to /help info.')
+        context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
 
-    print("Bot:", response)
-    await update.message.reply_text(response)
+    # closing db session
+    session.close()
+    print('leaving finish_handler function...')
+    return ConversationHandler.END
 
 
-async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print(f"Update {update} caused error {context.error}")
+def manage_text(update: Update, context: CallbackContext):
+    msg = update.message.text.lower()
+
+    if msg in ('hi', 'hey', 'hello', 'hi bot', 'olla', 'holla'):
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"Hi, {update.effective_user.first_name}.\n"
+                                      f"This is your news nba bot.\n"
+                                      f"I'll notify you about the hottest news from nba!\n"
+                                      f"Press /help for more info.")
+        sticker = open('static/' + 'sticker.webp', 'rb')
+        context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="Sorry, I can't understand you.\n"
+                                      "Press /help for more info.")
+        sticker = open('static/' + 'sticker_5.webp', 'rb')
+        context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
 
 
-if __name__ == "__main__":
-    print("Starting bot...")
-    app = Application.builder().token(TOKEN).build()
+def button_back_menu():
+    button = [[InlineKeyboardButton('Break conversation.', callback_data='cancel')]]
+    return InlineKeyboardMarkup(button)
 
-    # Commands
-    app.add_handler(CommandHandler("start", start_command))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("custom", custom_command))
 
-    # Messages
-    app.add_handler(MessageHandler(filters.TEXT, handle_message))
+def cancel_handler(update: Update, context: CallbackContext):
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text='⚠ Adding/updating info has been cancelled.\n'
+                                  'To return to the main menu press /help.')
+    return ConversationHandler.END
 
-    # Errors
-    app.add_error_handler(error)
 
-    # Polls the bot
-    print("Polling...")
-    app.run_polling(poll_interval=3)
+if __name__ == '__main__':
+    print('bot started...')
+    # Create the Updater
+    updater = Updater(BOT_TOKEN, use_context=True)
+
+    # Get the dispatcher to register handlers
+    dp = updater.dispatcher
+
+    # creating db
+    Base.metadata.create_all(engine)
+
+    # act on different commands
+    dp.add_handler(CommandHandler('start', start))
+    dp.add_handler(CommandHandler('help', help_))
+
+    # handling the conversation btw user and bot
+    personal_data_conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('add_or_update_info', add_info)],  # , CommandHandler("show_info", show_info)
+        states={
+            NAME: [MessageHandler(Filters.text & (~Filters.command), name_handler, pass_user_data=True)],
+            SURNAME: [MessageHandler(Filters.text & (~Filters.command), surname_handler, pass_user_data=True)],
+            TEAM: [MessageHandler(Filters.text & (~Filters.command), finish_handler, pass_user_data=True)],
+
+        },
+        fallbacks=[MessageHandler(Filters.command, cancel_handler), CommandHandler('cancel', cancel_handler),
+                   CallbackQueryHandler(cancel_handler, pattern='cancel'),
+                   CommandHandler('start', start)],
+    )
+
+    # SQL database
+    dp.add_handler(personal_data_conv_handler)
+    dp.add_handler(CommandHandler('add_info', add_info))
+    # dp.add_handler(CommandHandler('show_info', show_info))
+
+    # message to an unknown command
+    dp.add_handler(MessageHandler(Filters.text, manage_text))
+
+    # Start the Bot
+    updater.start_polling()
+    print('bot is working..')
