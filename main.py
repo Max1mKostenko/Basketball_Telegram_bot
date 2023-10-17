@@ -1,9 +1,15 @@
+import urllib.request
+from random import randrange
+import re
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext, MessageHandler, ConversationHandler, CommandHandler, Updater, Filters
 from telegram.ext import CallbackQueryHandler
 
 from database import Session, engine
 from model import User, Base
+
+from get_nba_api import show_team_info
 
 BOT_TOKEN = "6315814690:AAHxZe71KXEbRfFjYJAW2r0UCGjrKNb9kuM"
 BOT_USERNAME = "@max_beetroot_tg_bot"
@@ -27,26 +33,82 @@ def help_(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="\n📝 Things you can manage 📝\n"
                                   "- /add_or_update_info: to add/update personal info to the database.\n"
-                                  "- /show_info: to show info about yourself.")
+                                  "- /show_info: to show info about yourself.\n"
+                                  "- /show_team_info: to show info about your favourite team.\n"
+                                  "- /video_of_team: to show video of favourite team.")
 
     return ConversationHandler.END
 
 
-# def show_info(update: Update, context: CallbackContext):
-#     user = update.message.from_user.id
-#
-#     session = Session()
-#
-#     database_user = session.query(User).filter(User.telegram_id == user).first()
-#
-#     if user in database_user:
-#         context.bot.send_message(chat_id=update.effective_chat.id,
-#                                  text=f"Information about yourself: {database_user.username}; {database_user.surname}; "
-#                                       f"{database_user.team}.")
-#     else:
-#         context.bot.send_message(chat_id=update.effective_chat.id,
-#                                  text="You aren't exist in the database")
-#     session.close()
+def show_info(update: Update, context: CallbackContext):
+    # get user's telegram id
+    user = update.message.from_user.id
+
+    # opening db session
+    session = Session()
+
+    # looking for user in db by id
+    database_user = session.query(User).filter(User.telegram_id == user).first()
+
+    if database_user:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"📄 Your info. 📄\n"
+                                      f"✔ Name: {database_user.username}.\n"
+                                      f"✔ Surname: {database_user.surname}.\n"
+                                      f"✔ Favourite Team: {database_user.team}.")
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="✖ You aren't exist in the database")
+    # closing dp session
+    session.close()
+
+
+def show_favourite_team_info(update: Update, context: CallbackContext):
+    user = update.message.from_user.id
+
+    session = Session()
+
+    database_user = session.query(User).filter(User.telegram_id == user).first()
+
+    if database_user:
+        fav_team = database_user.team
+        data_of_team = show_team_info(fav_team)
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"📄 Info about your favourite team. 📄\n"
+                                      f"✔ Abbreviation: {data_of_team['abbreviation']}.\n"
+                                      f"✔ City: {data_of_team['city']}.\n"
+                                      f"✔ Conference: {data_of_team['conference']}\n."
+                                      f"✔ Division: {data_of_team['division']}\n."
+                                      f"✔ Full Name: {data_of_team['full_name']}\n."
+                                      f"✔ Name: {data_of_team['name']}.")
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="✖ Need to Change")
+
+
+def video_of_team(update: Update, context: CallbackContext):
+    random_search = randrange(0, 50)
+
+    user = update.message.from_user.id
+
+    session = Session()
+
+    database_user = session.query(User).filter(User.telegram_id == user).first()
+
+    if database_user:
+        searching_sport = database_user.team.replace(' ', '+')
+        #  opening html page with fav sport
+        html = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={searching_sport}")
+        #  generating video id url
+        video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"https://www.youtube.com/watch?v={video_ids[random_search]}")
+
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="\n✖No user's info provided.\n")
+
+    session.close()
 
 
 # Commands
@@ -122,7 +184,7 @@ def finish_handler(update: Update, context: CallbackContext):
     # validating
     list_of_teams = ['atlanta hawks', 'boston celtics', 'brooklyn nets', 'charlotte hornets', 'chicago bulls',
                      'cleveland cavaliers', 'dallas mavericks', 'denver nuggets', 'detroit pistons', 'la clippers',
-                     'golden state warriors', 'houston rockets', 'indiana pacers', 'lakers', 'miami heat',
+                     'golden state warriors', 'houston rockets', 'indiana pacers', 'los angeles lakers', 'miami heat',
                      'memphis grizzlies', 'milwaukee bucks', 'orlando magic', 'new orleans pelicans', 'new york knicks',
                      'oklahoma city thunder', 'minnesota timberwolves', 'philadelphia 76ers', 'washington wizards',
                      'portland trail blazers', 'sacramento kings', 'utah jazz', 'san antonio spurs', 'toronto raptors',
@@ -131,6 +193,12 @@ def finish_handler(update: Update, context: CallbackContext):
     if team.lower() not in list_of_teams:
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text='⚠ Please enter an existing and correct basketball team(ex. Boston Celtics):')
+        return TEAM
+
+    elif team[0] == "/":
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="⚠ You can't use '/' during adding info! Please enter an existing and correct "
+                                      "basketball team:")
         return TEAM
 
     # temporary saving the team into telegram session
@@ -235,12 +303,11 @@ if __name__ == '__main__':
 
     # handling the conversation btw user and bot
     personal_data_conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('add_or_update_info', add_info)],  # , CommandHandler("show_info", show_info)
+        entry_points=[CommandHandler('add_or_update_info', add_info)],
         states={
             NAME: [MessageHandler(Filters.text & (~Filters.command), name_handler, pass_user_data=True)],
             SURNAME: [MessageHandler(Filters.text & (~Filters.command), surname_handler, pass_user_data=True)],
             TEAM: [MessageHandler(Filters.text & (~Filters.command), finish_handler, pass_user_data=True)],
-
         },
         fallbacks=[MessageHandler(Filters.command, cancel_handler), CommandHandler('cancel', cancel_handler),
                    CallbackQueryHandler(cancel_handler, pattern='cancel'),
@@ -248,10 +315,12 @@ if __name__ == '__main__':
     )
 
     # SQL database
+    # handlers which are working with db
     dp.add_handler(personal_data_conv_handler)
     dp.add_handler(CommandHandler('add_info', add_info))
-    # dp.add_handler(CommandHandler('show_info', show_info))
-
+    dp.add_handler(CommandHandler('show_info', show_info))
+    dp.add_handler(CommandHandler('show_team_info', show_favourite_team_info))
+    dp.add_handler(CommandHandler('video_of_team', video_of_team))
     # message to an unknown command
     dp.add_handler(MessageHandler(Filters.text, manage_text))
 
