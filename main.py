@@ -6,8 +6,9 @@ import os
 
 from database.database import engine
 from models.model import Base
-from view.view import (start, help_, add_info, name_handler, surname_handler, finish_handler, show_info, del_info,
-                       show_favourite_team_info, video_of_team, cancel_handler, manage_text, NAME, SURNAME, TEAM)
+from view.view import (start, help_, add_info, name_handler, surname_handler, finish_handler, show_info, news_of_team,
+                       del_info, show_favourite_team_info, video_of_team, cancel_handler, manage_text, NAME, SURNAME,
+                       TEAM)
 
 
 # need to write
@@ -53,6 +54,8 @@ if __name__ == '__main__':
     dp.add_handler(CommandHandler('del_info', del_info))
     dp.add_handler(CommandHandler('show_team_info', show_favourite_team_info))
     dp.add_handler(CommandHandler('video_of_team', video_of_team))
+    dp.add_handler(CommandHandler('news_of_team', news_of_team))
+
     # message to an unknown command
     dp.add_handler(MessageHandler(Filters.text, manage_text))
 

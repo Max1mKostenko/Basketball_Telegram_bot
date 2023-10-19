@@ -12,6 +12,7 @@ def show_team_info(user_team: str):
         # getting data from API
         data = response.json()
 
+        # getting specific team info with the following key
         for team in data["data"]:
             if team["full_name"] == user_team:
                 return team

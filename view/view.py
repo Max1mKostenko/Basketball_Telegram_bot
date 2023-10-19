@@ -9,6 +9,7 @@ from models.model import User
 
 from utils.get_nba_api import show_team_info
 from utils.save_logs import log_decorator
+from utils.get_nba_news import get_nba_news
 
 # states for conversation handler (see below)
 NAME, SURNAME, TEAM = range(3)
@@ -34,7 +35,8 @@ def help_(update: Update, context: CallbackContext):
                                   "- /show_info: to show info about yourself.\n\n"
                                   "- /del_info: to delete info about yourself.\n\n"
                                   "- /show_team_info: to show info about your favourite team.\n\n"
-                                  "- /video_of_team: to show video of favourite team.")
+                                  "- /video_of_team: to show video of favourite team.\n\n"
+                                  "- /news_of_team: to show news about your favourite team.")
 
     return ConversationHandler.END
 
@@ -137,6 +139,51 @@ def video_of_team(update: Update, context: CallbackContext):
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text="\n✖No user's info provided.\n")
 
+    session.close()
+
+
+@log_decorator
+def news_of_team(update: Update, context: CallbackContext):
+    # getting user's id from chat
+    user = update.message.from_user.id
+
+    # opening dp
+    session = Session()
+
+    # searching user in database by telegram id
+    database_user = session.query(User).filter(User.telegram_id == user).first()
+
+    # checking if user exist (checking by id)
+    if database_user:
+        fav_team = database_user.team
+
+        # getting info from api
+        data_of_team = show_team_info(fav_team)
+
+        # checking if we get data from API
+        if data_of_team:
+            team = data_of_team["name"].lower()
+
+            # getting info from parsing the website
+            news = get_nba_news(team)
+
+            if news:
+                random_search = randrange(0, len(news) - 1)
+
+                context.bot.send_message(chat_id=update.effective_chat.id,
+                                         text=f"Your latest news: {news[random_search ]}")
+            else:
+                context.bot.send_message(chat_id=update.effective_chat.id,
+                                         text="\n✖ Something went wrong with parsing.\n")
+
+        else:
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text="\n✖ No user's info provided.\n")
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="\n✖ No user's info provided.\n")
+
+    # closing db
     session.close()
 
 

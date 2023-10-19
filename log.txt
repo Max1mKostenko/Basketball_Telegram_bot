@@ -1,0 +1,39 @@
+Function news_of_team started at Thu Oct 19 21:29:36 2023
+Function news_of_team finished at Thu Oct 19 21:29:38 2023
+Function news_of_team took 2.88 seconds to execute.
+Function video_of_team started at Thu Oct 19 21:29:38 2023
+Function video_of_team finished at Thu Oct 19 21:29:39 2023
+Function video_of_team took 1.02 seconds to execute.
+Function add_info started at Thu Oct 19 21:29:51 2023
+Function add_info finished at Thu Oct 19 21:29:52 2023
+Function add_info took 0.09 seconds to execute.
+Function name_handler started at Thu Oct 19 21:31:12 2023
+Function button_back_menu started at Thu Oct 19 21:31:12 2023
+Function button_back_menu finished at Thu Oct 19 21:31:12 2023
+Function button_back_menu took 0.00 seconds to execute.
+Function name_handler finished at Thu Oct 19 21:31:12 2023
+Function name_handler took 0.21 seconds to execute.
+Function surname_handler started at Thu Oct 19 21:31:15 2023
+Function button_back_menu started at Thu Oct 19 21:31:15 2023
+Function button_back_menu finished at Thu Oct 19 21:31:15 2023
+Function button_back_menu took 0.00 seconds to execute.
+Function surname_handler finished at Thu Oct 19 21:31:15 2023
+Function surname_handler took 0.19 seconds to execute.
+Function finish_handler started at Thu Oct 19 21:33:23 2023
+Function finish_handler finished at Thu Oct 19 21:33:24 2023
+Function finish_handler took 0.86 seconds to execute.
+Function help_ started at Thu Oct 19 21:33:25 2023
+Function help_ finished at Thu Oct 19 21:33:25 2023
+Function help_ took 0.08 seconds to execute.
+Function news_of_team started at Thu Oct 19 21:33:35 2023
+Function news_of_team finished at Thu Oct 19 21:33:39 2023
+Function news_of_team took 3.67 seconds to execute.
+Function video_of_team started at Thu Oct 19 21:33:39 2023
+Function video_of_team finished at Thu Oct 19 21:33:40 2023
+Function video_of_team took 1.18 seconds to execute.
+Function video_of_team started at Thu Oct 19 21:33:59 2023
+Function video_of_team finished at Thu Oct 19 21:34:00 2023
+Function video_of_team took 1.24 seconds to execute.
+Function news_of_team started at Thu Oct 19 21:34:00 2023
+Function news_of_team finished at Thu Oct 19 21:34:03 2023
+Function news_of_team took 2.72 seconds to execute.
