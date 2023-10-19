@@ -4,11 +4,11 @@ import re
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext, ConversationHandler
-from database import Session
-from model import User
+from database.database import Session
+from models.model import User
 
-from get_nba_api import show_team_info
-from save_logs import log_decorator
+from utils.get_nba_api import show_team_info
+from utils.save_logs import log_decorator
 
 # states for conversation handler (see below)
 NAME, SURNAME, TEAM = range(3)
@@ -30,10 +30,10 @@ def start(update: Update, context: CallbackContext):
 def help_(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="\n📝 Things you can manage 📝\n"
-                                  "- /add_or_update_info: to add/update personal info to the database.\n"
-                                  "- /show_info: to show info about yourself.\n"
-                                  "- /del_info: to delete info about yourself.\n"
-                                  "- /show_team_info: to show info about your favourite team.\n"
+                                  "- /add_or_update_info: to add/update personal info to the database.\n\n"
+                                  "- /show_info: to show info about yourself.\n\n"
+                                  "- /del_info: to delete info about yourself.\n\n"
+                                  "- /show_team_info: to show info about your favourite team.\n\n"
                                   "- /video_of_team: to show video of favourite team.")
 
     return ConversationHandler.END
@@ -58,7 +58,7 @@ def show_info(update: Update, context: CallbackContext):
                                       f"✔ Favourite Team: {database_user.team}.")
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="✖ You aren't exist in the database")
+                                 text="✖ You don't exist in the database.")
     # closing dp session
     session.close()
 
@@ -81,7 +81,7 @@ def del_info(update: Update, context: CallbackContext):
                                  text='✔All your info successfully deleted!')
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="✖ You aren't exist in the database")
+                                 text="✖ You don't exist in the database")
     # closing dp session
     session.close()
 
@@ -97,17 +97,21 @@ def show_favourite_team_info(update: Update, context: CallbackContext):
     if database_user:
         fav_team = database_user.team
         data_of_team = show_team_info(fav_team)
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=f"📄 Info about your favourite team. 📄\n"
-                                      f"✔ Abbreviation: {data_of_team['abbreviation']}.\n"
-                                      f"✔ City: {data_of_team['city']}.\n"
-                                      f"✔ Conference: {data_of_team['conference']}\n."
-                                      f"✔ Division: {data_of_team['division']}\n."
-                                      f"✔ Full Name: {data_of_team['full_name']}\n."
-                                      f"✔ Name: {data_of_team['name']}.")
+        if data_of_team:
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text=f"📄 Info about your favourite team. 📄\n"
+                                          f"✔ Abbreviation: {data_of_team['abbreviation']}.\n"
+                                          f"✔ City: {data_of_team['city']}.\n"
+                                          f"✔ Conference: {data_of_team['conference']}\n."
+                                          f"✔ Division: {data_of_team['division']}\n."
+                                          f"✔ Full Name: {data_of_team['full_name']}\n."
+                                          f"✔ Name: {data_of_team['name']}.")
+        else:
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text="✖ The API service doesn't work.")
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="✖ Need to Change")
+                                 text="✖ User doesn't exist in database")
 
 
 @log_decorator

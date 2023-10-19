@@ -1,9 +1,9 @@
 from telegram.ext import MessageHandler, ConversationHandler, CommandHandler, Updater, Filters
 from telegram.ext import CallbackQueryHandler
 
-from database import engine
-from model import Base
-from view import (start, help_, add_info, name_handler, surname_handler, finish_handler,manage_text, cancel_handler,
+from database.database import engine
+from models.model import Base
+from view.view import (start, help_, add_info, name_handler, surname_handler, finish_handler,manage_text, cancel_handler,
                   show_info, del_info, show_favourite_team_info, video_of_team, NAME, SURNAME, TEAM)
 
 BOT_TOKEN = "6315814690:AAHxZe71KXEbRfFjYJAW2r0UCGjrKNb9kuM"

@@ -1,13 +1,9 @@
 import requests
-import pprint
 
 
 def show_team_info(user_team: str):
-    # for structured data printing
-    pp = pprint.PrettyPrinter(indent=4)
-
     # api al all nba teams
-    all_teams_api = "https://www.balldontlie.io/api/v1/teamss"
+    all_teams_api = "https://www.balldontlie.io/api/v1/teams"
 
     # response from the selected url
     response = requests.get(all_teams_api)

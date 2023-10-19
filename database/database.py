@@ -8,7 +8,7 @@ import os
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 # getting to database file
-SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'user.db')
+SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, '../user.db')
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # initializing and connecting to database
