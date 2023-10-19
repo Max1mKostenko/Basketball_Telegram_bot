@@ -1,16 +1,26 @@
 from telegram.ext import MessageHandler, ConversationHandler, CommandHandler, Updater, Filters
 from telegram.ext import CallbackQueryHandler
 
+from dotenv import load_dotenv
+import os
+
 from database.database import engine
 from models.model import Base
-from view.view import (start, help_, add_info, name_handler, surname_handler, finish_handler,manage_text, cancel_handler,
-                  show_info, del_info, show_favourite_team_info, video_of_team, NAME, SURNAME, TEAM)
+from view.view import (start, help_, add_info, name_handler, surname_handler, finish_handler, show_info, del_info,
+                       show_favourite_team_info, video_of_team, cancel_handler, manage_text, NAME, SURNAME, TEAM)
 
-BOT_TOKEN = "6315814690:AAHxZe71KXEbRfFjYJAW2r0UCGjrKNb9kuM"
+
+# need to write
+def configure():
+    load_dotenv()
+
 
 if __name__ == '__main__':
-    # Create the Updater
-    updater = Updater(BOT_TOKEN, use_context=True)
+    # need to write
+    configure()
+
+    # Create the chat Updater(giving all info from working bot)
+    updater = Updater(os.getenv("BOT_TOKEN"), use_context=True)
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
