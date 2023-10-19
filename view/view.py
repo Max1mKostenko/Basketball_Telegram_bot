@@ -104,9 +104,9 @@ def show_favourite_team_info(update: Update, context: CallbackContext):
                                      text=f"📄 Info about your favourite team. 📄\n"
                                           f"✔ Abbreviation: {data_of_team['abbreviation']}.\n"
                                           f"✔ City: {data_of_team['city']}.\n"
-                                          f"✔ Conference: {data_of_team['conference']}\n."
-                                          f"✔ Division: {data_of_team['division']}\n."
-                                          f"✔ Full Name: {data_of_team['full_name']}\n."
+                                          f"✔ Conference: {data_of_team['conference']}.\n"
+                                          f"✔ Division: {data_of_team['division']}.\n"
+                                          f"✔ Full Name: {data_of_team['full_name']}.\n"
                                           f"✔ Name: {data_of_team['name']}.")
         else:
             context.bot.send_message(chat_id=update.effective_chat.id,
@@ -168,7 +168,7 @@ def news_of_team(update: Update, context: CallbackContext):
             news = get_nba_news(team)
 
             if news:
-                random_search = randrange(0, len(news) - 1)
+                random_search = randrange(0, len(news))
 
                 context.bot.send_message(chat_id=update.effective_chat.id,
                                          text=f"Your latest news: {news[random_search ]}")
@@ -277,9 +277,14 @@ def finish_handler(update: Update, context: CallbackContext):
         return TEAM
 
     # temporary saving the team into telegram session
-    context.user_data['team'] = team.title()
-    context.bot.send_message(chat_id=update.effective_chat.id,
-                             text='✔ Info accepted.')
+    if team.title() == "Philadelphia 76Ers":
+        context.user_data['team'] = "Philadelphia 76ers"
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text='✔ Info accepted.')
+    else:
+        context.user_data['team'] = team.title()
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text='✔ Info accepted.')
     # sticker = open('static/' + 'sticker_2.webp', 'rb')
     # context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
 
