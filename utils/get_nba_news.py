@@ -14,7 +14,11 @@ def get_nba_news(fav_team_name):
         news_list.append("https://www.nba.com/sixers/")
         return news_list
 
-    elif fav_team_name == "trail blazers":
+    elif fav_team_name == "raptors":
+        news_list.append("https://www.nba.com/raptors/")
+        return news_list
+
+    if fav_team_name == "trail blazers":
         fav_team_name = "blazers"
 
     URL = f"https://www.nba.com/{fav_team_name}/news/"
