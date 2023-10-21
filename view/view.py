@@ -8,7 +8,7 @@ from database.database import Session
 from models.model import User
 
 from utils.get_nba_api import show_team_info
-from utils.save_logs import log_decorator
+from logs.save_logs import log_decorator
 from utils.get_nba_news import get_nba_news
 
 # states for conversation handler (see below)

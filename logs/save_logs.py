@@ -7,7 +7,7 @@ def log_decorator(func):
     def wrapper(*args, **kwargs):
         start_time = time.time()
 
-        with open("log.txt", "a") as log_file:
+        with open(".", "a") as log_file:
             log_file.write(f"Function {func.__name__} started at {time.ctime(start_time)}\n")
 
         res = func(*args, **kwargs)
