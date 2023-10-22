@@ -11,13 +11,13 @@ from view.view import (start, help_, add_info, name_handler, surname_handler, fi
                        TEAM)
 
 
-# need to write
+# hiding token
 def configure():
     load_dotenv()
 
 
 if __name__ == '__main__':
-    # need to write
+    # hiding token
     configure()
 
     # Create the chat Updater(giving all info from working bot)
