@@ -2,7 +2,7 @@ import requests
 
 
 def show_team_info(user_team: str):
-    # api al all nba teams
+    # api of all nba teams
     all_teams_api = "https://www.balldontlie.io/api/v1/teams"
 
     # response from the selected url
