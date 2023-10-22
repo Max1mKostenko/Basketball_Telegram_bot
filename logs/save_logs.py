@@ -18,4 +18,5 @@ def log_decorator(func):
             log_file.write(f"Function {func.__name__} finished at {time.ctime(end_time)}\n")
             log_file.write(f"Function {func.__name__} took {duration:.2f} seconds to execute.\n")
         return res
+
     return wrapper

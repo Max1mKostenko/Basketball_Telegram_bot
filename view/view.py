@@ -18,24 +18,26 @@ NAME, SURNAME, TEAM = range(3)
 @log_decorator
 def start(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text=f"Hi, {update.effective_user.first_name}.\n"
-                                  f"This is your news nba bot.\n"
-                                  f"I'll notify you about the hottest news from nba!\n"
-                                  f"Press /help for more info.")
+                             text=f"Hi, {update.effective_user.first_name}!\n"
+                                  f"This is your news NBA bot.\n"
+                                  f"I'll notify you about the hottest news from nba.\n"
+                                  f"Press /help for more info! 🏀")
+
     sticker = open('static/' + 'sticker.webp', 'rb')
     context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
+
     return ConversationHandler.END
 
 
 @log_decorator
 def help_(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text="\n📝 Things you can manage 📝\n"
+                             text="\n📝 Things you can manage 🏀\n\n"
                                   "- /add_or_update_info: to add/update personal info to the database.\n\n"
                                   "- /show_info: to show info about yourself.\n\n"
                                   "- /del_info: to delete info about yourself.\n\n"
                                   "- /show_team_info: to show info about your favourite team.\n\n"
-                                  "- /video_of_team: to show video of favourite team.\n\n"
+                                  "- /video_of_team: to show video of your favourite team.\n\n"
                                   "- /news_of_team: to show news about your favourite team.")
 
     return ConversationHandler.END
@@ -54,13 +56,23 @@ def show_info(update: Update, context: CallbackContext):
 
     if database_user:
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=f"📄 Your info. 📄\n"
+                                 text=f"Information about you!\n\n"
                                       f"✔ Name: {database_user.username}.\n"
                                       f"✔ Surname: {database_user.surname}.\n"
-                                      f"✔ Favourite Team: {database_user.team}.")
+                                      f"✔ Favourite Team: {database_user.team}.\n\n"
+                                      f"Press /help for more info! 🏀")
+
+        sticker = open('static/' + 'sticker_3.webp', 'rb')
+        context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
+
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="✖ You don't exist in the database.")
+                                 text="✖ You don't exist in the database.\n\n"
+                                      "To return to the main menu, press /help. 🏀")
+
+        sticker = open('static/' + 'sticker_6.webp', 'rb')
+        context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
+
     # closing dp session
     session.close()
 
@@ -78,12 +90,21 @@ def del_info(update: Update, context: CallbackContext):
 
     if database_user:
         session.query(User).filter(User.telegram_id == user).delete()
+
         session.commit()
+
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text='✔All your info successfully deleted!')
+                                 text='✔ All your info successfully deleted!\n\n'
+                                      'Press /help for more info! 🏀')
+
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="✖ You don't exist in the database")
+                                 text="✖ You don't exist in the database.\n\n"
+                                      "To return to the main menu, press /help. 🏀")
+
+        sticker = open('static/' + 'sticker_6.webp', 'rb')
+        context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
+
     # closing dp session
     session.close()
 
@@ -97,23 +118,35 @@ def show_favourite_team_info(update: Update, context: CallbackContext):
     database_user = session.query(User).filter(User.telegram_id == user).first()
 
     if database_user:
+
         fav_team = database_user.team
         data_of_team = show_team_info(fav_team)
+
         if data_of_team:
             context.bot.send_message(chat_id=update.effective_chat.id,
-                                     text=f"📄 Info about your favourite team. 📄\n"
+                                     text=f"Info about your Favourite Team!\n\n"
                                           f"✔ Abbreviation: {data_of_team['abbreviation']}.\n"
                                           f"✔ City: {data_of_team['city']}.\n"
                                           f"✔ Conference: {data_of_team['conference']}.\n"
                                           f"✔ Division: {data_of_team['division']}.\n"
                                           f"✔ Full Name: {data_of_team['full_name']}.\n"
-                                          f"✔ Name: {data_of_team['name']}.")
+                                          f"✔ Name: {data_of_team['name']}.\n\n"
+                                          f"Press /help for more info! 🏀")
         else:
             context.bot.send_message(chat_id=update.effective_chat.id,
-                                     text="✖ The API service doesn't work.")
+                                     text="✖ The API service doesn't work.\n\n"
+                                          "To return to the main menu, press /help. 🏀")
+
+            sticker = open('static/' + 'sticker_7.webp', 'rb')
+            context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
+
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="✖ User doesn't exist in database")
+                                 text="✖ You doesn't exist in the database.\n\n"
+                                      "To return to the main menu, press /help. 🏀")
+
+        sticker = open('static/' + 'sticker_6.webp', 'rb')
+        context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
 
 
 @log_decorator
@@ -128,16 +161,23 @@ def video_of_team(update: Update, context: CallbackContext):
 
     if database_user:
         searching_sport = database_user.team.replace(' ', '+')
+
         #  opening html page with fav sport
         html = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={searching_sport}")
+
         #  generating video id url
         video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=f"https://www.youtube.com/watch?v={video_ids[random_search]}")
+                                 text=f"https://www.youtube.com/watch?v={video_ids[random_search]}\n\n"
+                                      f"Press /help for more info! 🏀")
 
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="\n✖No user's info provided.\n")
+                                 text="\n✖ You don't exist in the database.\n\n"
+                                      "To return to the main menu, press /help. 🏀")
+
+        sticker = open('static/' + 'sticker_6.webp', 'rb')
+        context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
 
     session.close()
 
@@ -155,6 +195,7 @@ def news_of_team(update: Update, context: CallbackContext):
 
     # checking if user exist (checking by id)
     if database_user:
+        # getting user's favourite team
         fav_team = database_user.team
 
         # getting info from api
@@ -171,17 +212,33 @@ def news_of_team(update: Update, context: CallbackContext):
                 random_search = randrange(0, len(news))
 
                 context.bot.send_message(chat_id=update.effective_chat.id,
-                                         text=f"Your latest news: {news[random_search ]}")
+                                         text=f"Your latest news: {news[random_search]}\n\n"
+                                              f"Press /help for more info! 🏀")
             else:
                 context.bot.send_message(chat_id=update.effective_chat.id,
-                                         text="\n✖ Something went wrong with parsing.\n")
+                                         text="✖ Something went wrong with parsing.\n\n"
+                                              "To return to the main menu, press /help. 🏀")
+
+                sticker = open('static/' + 'sticker_7.webp', 'rb')
+                context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
 
         else:
             context.bot.send_message(chat_id=update.effective_chat.id,
-                                     text="\n✖ No user's info provided.\n")
+                                     text="✖ The API service doesn't work.\n\n"
+                                          "To return to the main menu, press /help. 🏀")
+
+            # creating sticker
+            sticker = open('static/' + 'sticker_7.webp', 'rb')
+            context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
+
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="\n✖ No user's info provided.\n")
+                                 text="✖ You don't exist in the database.\n\n"
+                                      "To return to the main menu, press /help. 🏀")
+
+        # creating sticker
+        sticker = open('static/' + 'sticker_6.webp', 'rb')
+        context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
 
     # closing db
     session.close()
@@ -192,7 +249,7 @@ def news_of_team(update: Update, context: CallbackContext):
 @log_decorator
 def add_info(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text='1️⃣ Enter your name, please (ex. Maxim):')
+                             text='1️⃣ Please enter your name (ex. Maxim):')
     return NAME
 
 
@@ -224,8 +281,10 @@ def name_handler(update: Update, context: CallbackContext):
 
 @log_decorator
 def surname_handler(update: Update, context: CallbackContext):
+
     # receiving the surname from user from the last input
     surname = update.effective_message.text
+
     # validating surname
     if not surname.isalpha():
         context.bot.send_message(chat_id=update.effective_chat.id,
@@ -243,8 +302,9 @@ def surname_handler(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="✔ Info accepted.",
                              reply_markup=button_back_menu())
+
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text="3️⃣ Please enter your favourite nba team (ex. Miami Heat):")
+                             text="3️⃣ Please enter full name of your favourite nba team (ex. Miami Heat):")
 
     return TEAM
 
@@ -267,7 +327,8 @@ def finish_handler(update: Update, context: CallbackContext):
 
     if team.lower() not in list_of_teams:
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text='⚠ Please enter an existing and correct basketball team(ex. Boston Celtics):')
+                                 text='⚠ Please enter full name of an existing and correct basketball '
+                                      'team(ex. Boston Celtics):')
         return TEAM
 
     elif team[0] == "/":
@@ -308,13 +369,17 @@ def finish_handler(update: Update, context: CallbackContext):
                              username=context.user_data['username'],
                              surname=context.user_data['surname'],
                              team=context.user_data['team'])
+
         # adding user into session
         session.add(database_user)
+
         # saving user in db
         session.commit()
+
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text='✔ Collecting the info has been completed.\n'
-                                      '✔ You can return to /help info.')
+                                 text='✔ Collecting the info has been completed.\n\n'
+                                      'To return to the main menu, press /help. 🏀')
+
         context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
 
     else:
@@ -325,8 +390,8 @@ def finish_handler(update: Update, context: CallbackContext):
         session.add(database_user)
         session.commit()
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text='✔ Updating the info has been completed.\n'
-                                      '✔ You can return to /help info.')
+                                 text='✔ Updating the info has been completed.\n\n'
+                                      'To return to the main menu, press /help. 🏀')
         context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
 
     # closing db session
@@ -343,13 +408,16 @@ def manage_text(update: Update, context: CallbackContext):
                                  text=f"Hi, {update.effective_user.first_name}.\n"
                                       f"This is your news nba bot.\n"
                                       f"I'll notify you about the hottest news from nba!\n"
-                                      f"Press /help for more info.")
+                                      f"Press /help for more info. 🏀")
+
         sticker = open('static/' + 'sticker.webp', 'rb')
         context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
+
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="Sorry, I can't understand you.\n"
-                                      "Press /help for more info.")
+                                 text="Sorry, I can't understand you.\n\n"
+                                      "To return to the main menu, press /help. 🏀")
+
         sticker = open('static/' + 'sticker_5.webp', 'rb')
         context.bot.send_sticker(chat_id=update.message.chat_id, sticker=sticker)
 
@@ -363,6 +431,6 @@ def button_back_menu():
 @log_decorator
 def cancel_handler(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text='⚠ Adding/updating info has been cancelled.\n'
-                                  'To return to the main menu press /help.')
+                             text='⚠ Adding/updating info has been cancelled.\n\n'
+                                  'To return to the main menu, press /help. 🏀')
     return ConversationHandler.END
