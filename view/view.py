@@ -160,10 +160,10 @@ def video_of_team(update: Update, context: CallbackContext):
     database_user = session.query(User).filter(User.telegram_id == user).first()
 
     if database_user:
-        searching_sport = database_user.team.replace(' ', '+')
+        searching_team = database_user.team.replace(' ', '+')
 
         #  opening html page with fav sport
-        html = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={searching_sport}")
+        html = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={searching_team}")
 
         #  generating video id url
         video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
